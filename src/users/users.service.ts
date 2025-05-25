@@ -1,26 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcryptjs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
+import { Repository } from 'typeorm';
+import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  findAll() {
-    return `This action returns all users`;
-  }
+  async create(createUserDto: CreateUserDto) {
+    try {
+      const saltRounds: number = Number(this.configService.get('SALT_ROUNDS') ?? '10');
+      const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+      const user = this.userRepository.create({
+        email: createUserDto.email,
+        password: hashedPassword,
+      });
+      
+      await this.userRepository.save(user)
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+      const userPayload: JwtPayload = {
+        id: user.id,
+        email: user.email,
+      }; 
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+      return {
+        ...userPayload,
+        token: await this.authService.getJwtToken(userPayload),
+      };
+    } catch (err) {
+      console.error('Error creating user', err);
+      throw new InternalServerErrorException('Error creating user');
+    }
   }
 }

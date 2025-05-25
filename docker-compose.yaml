@@ -21,6 +21,10 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: editor
+      JWT_SECRET: secret
+      SALT_ROUNDS: 10
+      NODE_ENV: development
+      PORT: 3000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - temp-vol:/temp-vol
