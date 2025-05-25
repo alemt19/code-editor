@@ -14,7 +14,6 @@ Este proyecto requiere **pnpm** y **Docker**.
         docker pull node:lts-alpine
         docker pull ruby:3.2-alpine
         docker pull php:8.2-cli-alpine
-        docker pull lua:5.4-alpine
         docker pull perl:slim
     ```
 
