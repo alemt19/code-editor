@@ -16,6 +16,9 @@
     <select id="language">
       <option value="python">Python</option>
       <option value="javascript">JavaScript</option>
+      <option value="ruby">Ruby</option>
+      <option value="php">PHP</option>
+      <option value="perl">Perl</option>
     </select>
   </label>
   <br/><br/>
@@ -71,15 +74,14 @@
     });
 
     socket.on('connect', () => {
-    console.log('WebSocket conectado');
+      console.log('WebSocket conectado');
     });
     socket.on('disconnect', () => {
-    console.log('WebSocket desconectado');
+      console.log('WebSocket desconectado');
     });
     socket.on('connect_error', (err) => {
-    console.error('Error de conexión WebSocket:', err);
+      console.error('Error de conexión WebSocket:', err);
     });
-
   </script>
 </body>
 </html>

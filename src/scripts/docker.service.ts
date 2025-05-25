@@ -3,44 +3,77 @@ import * as Docker from 'dockerode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+interface LanguageConfig {
+  image: string;
+  cmd: (filename: string) => string[];
+  extension: string;
+}
+
 @Injectable()
 export class DockerService {
-  private docker = new Docker({ socketPath: '/var/run/docker.sock' });
+  private docker = new Docker();
+
+  private languageConfig: Record<string, LanguageConfig> = {
+    python: {
+      image: 'python:3.12-slim-bookworm',
+      cmd: (filename) => ['python', `/temp-vol/${filename}`],
+      extension: 'py',
+    },
+    javascript: {
+      image: 'node:lts-alpine',
+      cmd: (filename) => ['node', `/temp-vol/${filename}`],
+      extension: 'js',
+    },
+    ruby: {
+      image: 'ruby:3.2-alpine',
+      cmd: (filename) => ['ruby', `/temp-vol/${filename}`],
+      extension: 'rb',
+    },
+    php: {
+      image: 'php:8.2-cli-alpine',
+      cmd: (filename) => ['php', `/temp-vol/${filename}`],
+      extension: 'php',
+    },
+    perl: {
+      image: 'perl:slim',
+      cmd: (filename) => ['perl', `/temp-vol/${filename}`],
+      extension: 'pl',
+    },
+  };
 
   async executeScript(
-    language: 'python' | 'javascript',
+    language: string,
     code: string,
     onOutput: (data: string) => void,
     onError: (error: string) => void,
   ) {
+    const config = this.languageConfig[language];
+    if (!config) {
+      onError(`Language "${language}" is not supported.`);
+      return;
+    }
+
     let container: Docker.Container | null = null;
     try {
-      // 1. Directorio temporal dentro del contenedor NestJS (mapeado al volumen)
       const containerTempDir = '/temp-vol';
       fs.mkdirSync(containerTempDir, { recursive: true });
-      const filename = `script_${Date.now()}.${language === 'python' ? 'py' : 'js'}`;
+
+      const filename = `script_${Date.now()}.${config.extension}`;
       const scriptPath = path.join(containerTempDir, filename);
-      
       fs.writeFileSync(scriptPath, code);
 
-      // 2. Crear contenedor de ejecución montando el volumen completo
       container = await this.docker.createContainer({
-        Image: language === 'python' ? 'python:3.12-slim-bookworm' : 'node:lts-alpine',
-        Cmd: [
-          language === 'python' ? 'python' : 'node',
-          `/temp-vol/${filename}`
-        ],
+        Image: config.image,
+        Cmd: config.cmd(filename),
         HostConfig: {
-          // Monta el volumen completo en /temp-vol
-          Binds: [
-            'code-editor_temp-vol:/temp-vol:ro'
-          ],
-          Memory: 256 * 1024 * 1024,
+          Binds: ['code-editor_temp-vol:/temp-vol:ro'],
+          Memory: 256 * 1024 * 1024, // 256 MB
+          NanoCpus: 5e8, // 0.5 CPU
           ReadonlyRootfs: true,
           NetworkMode: 'none',
           SecurityOpt: ['no-new-privileges'],
         },
-        User: '1000:1000'
+        User: '1000:1000',
       });
 
       await container.start();
@@ -60,16 +93,16 @@ export class DockerService {
             fs.unlinkSync(scriptPath);
           }
         } catch (err) {
-          console.error('Error en limpieza:', err);
+          console.error('Error cleaning up:', err);
         }
       });
     } catch (error) {
-      console.error('Error al ejecutar script:', error);
-      onError(`Error: ${error instanceof Error ? error.message : 'Desconocido'}`);
+      console.error('Error executing script:', error);
+      onError(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       try {
         await container?.remove();
       } catch (err) {
-        console.error('Error eliminando contenedor:', err);
+        console.error('Error removing container:', err);
       }
     }
   }

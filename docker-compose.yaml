@@ -26,11 +26,6 @@ services:
       - temp-vol:/temp-vol
       - .:/app
     command: pnpm start:dev
-  image-puller:
-    image: docker:cli
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "docker pull python:3.12-slim-bookworm && docker pull node:lts-alpine"
 volumes:
   db-data:
   temp-vol:
