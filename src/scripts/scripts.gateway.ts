@@ -1,9 +1,14 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer } from '@nestjs/websockets';
+import { WebSocketGateway, SubscribeMessage, WebSocketServer, MessageBody, ConnectedSocket } from '@nestjs/websockets';
 import { ScriptsService } from './scripts.service';
-import { CreateScriptDto } from './dto/create-script.dto';
-import { UpdateScriptDto } from './dto/update-script.dto';
+import { UpdateScriptContentDto } from './dto/update-script-content.dto';
 import { Server, Socket } from 'socket.io';
 import { DockerService } from './docker.service';
+import { UseGuards } from '@nestjs/common';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/users/entities/user.entity';
+import { AuthGuard } from '@nestjs/passport';
+import { RunScriptDto } from './dto/run-script.dto';
+import { WsJwtGuard } from 'src/auth/guards/ws-jwt.guard';
 
 @WebSocketGateway({ cors: true })
 export class ScriptsGateway {
@@ -15,15 +20,25 @@ export class ScriptsGateway {
     private readonly dockerService: DockerService,
   ) {}
 
+  @UseGuards(WsJwtGuard)
   @SubscribeMessage('saveScript')
-  async handleSaveScript(client: Socket, payload: { userId: string; language: string; content: string }) {
-    const script = await this.scriptsService.saveOrUpdateScript(payload.userId, payload.language, payload.content);
+  async handleSaveScript(
+    @GetUser('ws') user: User,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: UpdateScriptContentDto,
+  ) {
+    const script = await this.scriptsService.updateContent(payload, user);
     client.emit('scriptSaved', script);
   }
 
+  @UseGuards(WsJwtGuard)
   @SubscribeMessage('runScript')
-  async handleRunScript(client: Socket, payload: { userId: string; language: 'python' | 'javascript' }) {
-    const script = await this.scriptsService.getScript(payload.userId, payload.language);
+  async handleRunScript(
+    @GetUser('ws') user: User,
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: RunScriptDto,
+  ) {
+    const script = await this.scriptsService.findOne(payload.id, user);
     if (!script) {
       client.emit('scriptError', { message: 'Script no encontrado' });
       return;

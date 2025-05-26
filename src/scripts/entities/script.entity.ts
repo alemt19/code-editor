@@ -6,10 +6,13 @@ export class Script {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  language: string; // 'python' o 'javascript'
+  @Column('varchar', { length: 30 })
+  name: string;
 
-  @Column({ type: 'text' })
+  @Column('varchar')
+  language: string;
+
+  @Column({ type: 'text', default: '' })
   content: string;
 
   @ManyToOne(() => User)
