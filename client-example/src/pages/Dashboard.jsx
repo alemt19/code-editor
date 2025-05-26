@@ -4,12 +4,11 @@ import { useNavigate } from "react-router-dom";
 const API_BASE = "http://localhost:3000";
 
 const languageOptions = [
-  { value: "javaScript", label: "JavaScript" },
+  { value: "javascript", label: "JavaScript" },
   { value: "python", label: "Python" },
   { value: "ruby", label: "Ruby" },
   { value: "perl", label: "Perl" },
   { value: "php", label: "PHP" },
-  // Add more as needed
 ];
 
 export default function Dashboard() {
