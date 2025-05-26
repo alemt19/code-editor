@@ -1,87 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Prueba Editor de Código</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; }
-    textarea { width: 100%; height: 200px; }
-    #output { background: #111; color: #0f0; padding: 1em; height: 150px; overflow-y: auto; margin-top: 1em; }
-  </style>
-</head>
-<body>
-  <h1>Editor de Código - Prueba</h1>
-  <label>
-    Lenguaje:
-    <select id="language">
-      <option value="python">Python</option>
-      <option value="javascript">JavaScript</option>
-      <option value="ruby">Ruby</option>
-      <option value="php">PHP</option>
-      <option value="perl">Perl</option>
-    </select>
-  </label>
-  <br/><br/>
-  <textarea id="code" placeholder="Escribe tu código aquí..."></textarea>
-  <br/>
-  <button id="saveBtn">Guardar</button>
-  <button id="runBtn">Ejecutar</button>
-  <h2>Salida:</h2>
-  <div id="output"></div>
-
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script>
-    // Cambia la URL si tu backend está en otro host/puerto
-    const socket = io('http://localhost:3000');
-
-    // Simula un usuario fijo para pruebas
-    const userId = '9a7b330a-0d5d-4f7d-8c2b-9e6b1d2c0c5e';
-    const codeArea = document.getElementById('code');
-    const languageSelect = document.getElementById('language');
-    const outputDiv = document.getElementById('output');
-
-    document.getElementById('saveBtn').onclick = () => {
-      socket.emit('saveScript', {
-        userId,
-        language: languageSelect.value,
-        content: codeArea.value
-      });
-      outputDiv.innerHTML += "<div style='color:#888'>[Guardado]</div>";
-    };
-
-    document.getElementById('runBtn').onclick = () => {
-      outputDiv.innerHTML = '';
-      socket.emit('runScript', {
-        userId,
-        language: languageSelect.value
-      });
-    };
-
-    // Mostrar salida del script
-    socket.on('scriptOutput', (data) => {
-      outputDiv.innerHTML += `<div>[${data.type}] ${data.data}</div>`;
-      outputDiv.scrollTop = outputDiv.scrollHeight;
-    });
-
-    // Confirmación de guardado
-    socket.on('scriptSaved', (data) => {
-      outputDiv.innerHTML += `<div style='color:#0af'>[Script guardado]</div>`;
-    });
-
-    // Manejo de errores
-    socket.on('scriptError', (data) => {
-      outputDiv.innerHTML += `<div style='color:#f00'>[Error] ${data.message}</div>`;
-    });
-
-    socket.on('connect', () => {
-      console.log('WebSocket conectado');
-    });
-    socket.on('disconnect', () => {
-      console.log('WebSocket desconectado');
-    });
-    socket.on('connect_error', (err) => {
-      console.error('Error de conexión WebSocket:', err);
-    });
-  </script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
