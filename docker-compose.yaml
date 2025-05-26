@@ -10,7 +10,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
-  app:
+  server:
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -33,6 +33,17 @@ services:
       - temp-vol:/temp-vol
       - ./server:/app
     command: pnpm start:dev
+
+  client:
+    build:
+      context: ./client-example
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client-example:/app
+    depends_on:
+      - server
 
 volumes:
   db-data:
