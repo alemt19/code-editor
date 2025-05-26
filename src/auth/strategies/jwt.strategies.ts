@@ -29,11 +29,14 @@ export class JwtStrategy extends PassportStrategy( Strategy ) {
             where: {
                 id,
                 email,
+            },
+            select: {
+                id: true,
+                email: true,
             }
         });
 
         if (!user) throw new UnauthorizedException('');
-
         return user;
     }
 
