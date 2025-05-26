@@ -9,8 +9,11 @@ services:
       - "5434:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+
   app:
-    build: .
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     depends_on:
@@ -28,8 +31,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - temp-vol:/temp-vol
-      - .:/app
+      - ./server:/app
     command: pnpm start:dev
+
 volumes:
   db-data:
   temp-vol:
